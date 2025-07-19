@@ -5,8 +5,21 @@ import 'expense_item.dart';
 class ExpenseList extends StatelessWidget {
   final List<Expense> expenses;
   final Function(String) onDelete;
+  final Function(Expense) onShare;
+  final bool isSelectionMode;
+  final Set<String> selectedItems;
+  final Function(String) onItemTapped;
 
-  ExpenseList({required this.expenses, required this.onDelete});
+  const ExpenseList({
+    super.key,
+    required this.expenses,
+    required this.onDelete,
+    required this.onShare,
+    // Add to constructor
+    required this.isSelectionMode,
+    required this.selectedItems,
+    required this.onItemTapped,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,17 +31,24 @@ class ExpenseList extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 fontStyle: FontStyle.italic,
-                color: Color(0xDD000000),
+                color: Color(0xFF00DAC6),
               ),
               textAlign: TextAlign.center,
             ),
         )
         : ListView.builder(
             itemCount: expenses.length,
-            itemBuilder: (ctx, i) => ExpenseItem(
-              expense: expenses[i],
-              onDelete: onDelete,
-            ),
+            itemBuilder: (ctx, i) {
+              final expense = expenses[i];
+              return ExpenseItem(
+                expense: expense,
+                onDelete: onDelete,
+                onShare: onShare,
+                isSelectionMode: isSelectionMode,
+                isSelected: selectedItems.contains(expense.id),
+                onTap: () => onItemTapped(expense.id),
+              );
+            }
         );
   }
 }
