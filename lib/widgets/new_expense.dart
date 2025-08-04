@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class NewExpense extends StatefulWidget {
   final Function(String, double, DateTime) onAddExpense;
 
-  NewExpense({super.key, required this.onAddExpense});
+  const NewExpense({super.key, required this.onAddExpense});
 
   @override
   State<NewExpense> createState() => _NewExpenseState();
