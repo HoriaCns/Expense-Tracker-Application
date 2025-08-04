@@ -65,7 +65,7 @@ class ExpenseItem extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           elevation: 3,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -89,7 +89,7 @@ class ExpenseItem extends StatelessWidget {
                       Text(
                         expense.title,
                         style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                            ?.copyWith(fontWeight: FontWeight.w900),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
