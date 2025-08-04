@@ -115,7 +115,7 @@ class _NewExpenseState extends State<NewExpense> {
             TextField(
               controller: _amountController,
               decoration: const InputDecoration(
-                prefixText: '\$ ',
+                prefixText: '\£ ',
                 labelText: 'Amount',
                 border: OutlineInputBorder(),
               ),

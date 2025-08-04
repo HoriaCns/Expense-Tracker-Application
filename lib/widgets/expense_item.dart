@@ -24,7 +24,7 @@ class ExpenseItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = isSelected ? Colors.orange : null;
+    final cardColor = isSelected ? Colors.teal : null;
     // Slidable widget that enables the swipe actions
     return Slidable(
       // Disable sliding when in selection mode
@@ -81,22 +81,6 @@ class ExpenseItem extends StatelessWidget {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
-                // styled container for the amount to make it stand out
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF00DAC6),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    expense.amount.toString(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -112,6 +96,22 @@ class ExpenseItem extends StatelessWidget {
                       Text(
                         DateFormat.yMMMd().format(expense.date),
                         style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '\£${expense.amount}',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black
+                        ),
                       ),
                     ],
                   ),

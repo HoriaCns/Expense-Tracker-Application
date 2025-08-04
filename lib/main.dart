@@ -26,11 +26,12 @@ class ExpenseApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Expense Tracker',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: Color(0xFF121212),
         primaryColor: Color(0xFF1E1E1E),
         appBarTheme: AppBarTheme(
-          backgroundColor: Color(0xFF00DAC6),
+          backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -161,7 +162,7 @@ class _ExpenseHomeState extends State<ExpenseHome> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(color: Color(0xFF03ED9B)),
+              decoration: const BoxDecoration(color: Colors.deepPurple),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
