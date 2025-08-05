@@ -31,7 +31,7 @@ class ExpenseList extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 fontStyle: FontStyle.italic,
-                color: Color(0xFF00DAC6),
+                color: Color(0xFFC0ED36),
               ),
               textAlign: TextAlign.center,
             ),

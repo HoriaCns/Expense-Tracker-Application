@@ -1,6 +1,7 @@
 import 'package:expense_tracker/api/appwrite_client.dart';
 import 'package:expense_tracker/api/auth_notifier.dart';
 import 'package:expense_tracker/screens/auth_gate.dart';
+import 'package:expense_tracker/screens/spending_screen.dart'; // Import the new screen
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appwrite/models.dart' as models;
@@ -11,8 +12,6 @@ import 'widgets/expense_list.dart';
 import 'widgets/new_expense.dart';
 
 void main() {
-  // Wrap the entire app in a ChangeNotifierProvider.
-  // This makes the AuthNotifier instance available to all descendant widgets.
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthNotifier(),
@@ -25,20 +24,24 @@ class ExpenseApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Expense Tracker',
+      title: 'Finora',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: Color(0xFF121212),
-        primaryColor: Color(0xFF1E1E1E),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.deepPurple,
-          foregroundColor: Colors.white,
+        scaffoldBackgroundColor: const Color(0xFF96A4D3),
+        primaryColor: const Color(0x00000000),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF96A4D3),
+          secondary: const Color(0xFFAA8F76),
         ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF152046),
+          foregroundColor: Color(0xFFAA8F76),
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: Color(0xFFFFFFFF),
         ),
-        cardColor: Color(0xFFFFFFFF),
-        textTheme: TextTheme(bodyMedium: TextStyle(color: Colors.black)),
+        cardColor: const Color(0xFFFFFFFF),
+        textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.white)),
       ),
       home: const AuthGate(),
     );
@@ -60,16 +63,22 @@ class _ExpenseHomeState extends State<ExpenseHome> {
   bool _isSelectionMode = false;
   final Set<String> _selectedItems = {};
 
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _expensesFuture = Future.value([]);
-    // Use the AuthNotifier to get the current user instead of a direct call.
     _loadUserDataAndExpenses();
   }
 
   void _loadUserDataAndExpenses() {
-    // Access the user from the provider.
     final user = Provider.of<AuthNotifier>(context, listen: false).currentUser;
     if (mounted) {
       setState(() {
@@ -111,10 +120,8 @@ class _ExpenseHomeState extends State<ExpenseHome> {
     _refreshExpenses();
   }
 
-  // REFACTORED: Use the AuthNotifier for signing out.
   void _signOut() {
     Provider.of<AuthNotifier>(context, listen: false).signOut();
-    // No Navigator needed. The AuthGate will handle the screen change.
   }
 
   void _startAddExpense(BuildContext context) {
@@ -133,14 +140,14 @@ class _ExpenseHomeState extends State<ExpenseHome> {
         'Check out this expense: ${expense.title} for ${expense.amount.toStringAsFixed(2)} on ${DateFormat.yMd().format(expense.date)}';
     print('Sharing: $textToShare');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Sharing feature coming soon!'),
         duration: Duration(seconds: 2),
       ),
     );
   }
 
-  void _onItemTapped(String id) {
+  void _onItemTappedForSelection(String id) {
     if (_isSelectionMode) {
       setState(() {
         if (_selectedItems.contains(id)) {
@@ -162,15 +169,15 @@ class _ExpenseHomeState extends State<ExpenseHome> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(color: Colors.deepPurple),
+              decoration: const BoxDecoration(color: Color(0xFF152046)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Text('Logged in as:', style: TextStyle(color: Colors.black)),
+                  const Text('Logged in as:', style: TextStyle(color: Colors.white)),
                   Text(
                     _currentUser?.email ?? 'Loading...',
-                    style: const TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -185,19 +192,21 @@ class _ExpenseHomeState extends State<ExpenseHome> {
       ),
       appBar: AppBar(
         centerTitle: true,
-        title: Text(_isSelectionMode ? '${_selectedItems.length} selected' : "Expense Tracker"),
+        title: Text(_isSelectionMode ? '${_selectedItems.length} selected' : "Finora"),
         actions: [
           if (hasSelectedItems)
             IconButton(icon: const Icon(Icons.delete), onPressed: _deleteExpenses, tooltip: 'Delete Selected'),
-          TextButton(
-            child: Text(_isSelectionMode ? 'Cancel' : 'Select', style: const TextStyle(color: Colors.white)),
-            onPressed: () {
-              setState(() {
-                _isSelectionMode = !_isSelectionMode;
-                _selectedItems.clear();
-              });
-            },
-          ),
+
+            if(_selectedIndex == 0)
+              TextButton(
+                child: Text(_isSelectionMode ? 'Cancel' : 'Select', style: const TextStyle(color: Color(0xFFAA8F76))),
+                onPressed: () {
+                  setState(() {
+                    _isSelectionMode = !_isSelectionMode;
+                    _selectedItems.clear();
+                  });
+                },
+              ),
         ],
       ),
       body: FutureBuilder<List<Expense>>(
@@ -210,25 +219,50 @@ class _ExpenseHomeState extends State<ExpenseHome> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           final expenses = snapshot.data ?? [];
-          return ExpenseList(
-            expenses: expenses,
-            isSelectionMode: _isSelectionMode,
-            selectedItems: _selectedItems,
-            onItemTapped: _onItemTapped,
-            onShare: _shareExpense,
-            onDelete: (id) async {
-              await _appwriteClient.deleteExpense(id);
-              _refreshExpenses();
-            },
-          );
+
+          final List<Widget> pages = [
+            // Page 0: Home (Expense List)
+            ExpenseList(
+              expenses: expenses,
+              isSelectionMode: _isSelectionMode,
+              selectedItems: _selectedItems,
+              onItemTapped: _onItemTappedForSelection,
+              onShare: _shareExpense,
+              onDelete: (id) async {
+                await _appwriteClient.deleteExpense(id);
+                _refreshExpenses();
+              },
+            ),
+            // Page 1: The new SpendingScreen
+            SpendingScreen(expenses: expenses),
+          ];
+
+          return pages[_selectedIndex];
         },
       ),
-      floatingActionButton: _isSelectionMode
-          ? null
-          : FloatingActionButton(
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights), // A more fitting icon for "Spending"
+            label: 'Spending', // UPDATED: Label is now "Spending"
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
+        unselectedItemColor: Colors.white,
+        backgroundColor: const Color(0xFF1E1E1E),
+        onTap: _onItemTapped,
+      ),
+      floatingActionButton: _selectedIndex == 0 && !_isSelectionMode
+          ? FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () => _startAddExpense(context),
-      ),
+      )
+          : null,
     );
   }
 }
