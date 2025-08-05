@@ -97,16 +97,28 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF96A4D3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Image.asset(
+                    'assets/images/Finora.png',
+                    height: 80,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   _isSigningUp ? 'Create an Account' : 'Welcome Back!',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Color(0xFF152046)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                  style: TextStyle(color: Colors.teal),
+                  style: TextStyle(color: Color(0xFF152046)),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) => (value?.isEmpty ?? true) ? 'Please enter an email' : null,
                 ),
@@ -114,7 +126,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
-                  style: TextStyle(color: Colors.teal),
+                  style: TextStyle(color: Color(0xFF152046)),
                   obscureText: true,
                   validator: (value) => (value?.length ?? 0) < 8 ? 'Password must be at least 8 characters' : null,
                 ),
@@ -123,7 +135,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
                   onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: Color(0xFF152046), foregroundColor: Colors.white),
                   child: Text(_isSigningUp ? 'Sign Up' : 'Sign In'),
                 ),
                 const SizedBox(height: 16),

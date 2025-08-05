@@ -174,10 +174,17 @@ class _ExpenseHomeState extends State<ExpenseHome> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Text('Logged in as:', style: TextStyle(color: Colors.white)),
+                  const Text(
+                    'Logged in as:',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   Text(
                     _currentUser?.email ?? 'Loading...',
-                    style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -192,21 +199,37 @@ class _ExpenseHomeState extends State<ExpenseHome> {
       ),
       appBar: AppBar(
         centerTitle: true,
-        title: Text(_isSelectionMode ? '${_selectedItems.length} selected' : "Finora"),
+        title: _isSelectionMode
+            ? Text('${_selectedItems.length} selected')
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/images/Finora.png', height: 32),
+                  const SizedBox(width: 8),
+                  const Text("Finora"),
+                ],
+              ),
         actions: [
           if (hasSelectedItems)
-            IconButton(icon: const Icon(Icons.delete), onPressed: _deleteExpenses, tooltip: 'Delete Selected'),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteExpenses,
+              tooltip: 'Delete Selected',
+            ),
 
-            if(_selectedIndex == 0)
-              TextButton(
-                child: Text(_isSelectionMode ? 'Cancel' : 'Select', style: const TextStyle(color: Color(0xFFAA8F76))),
-                onPressed: () {
-                  setState(() {
-                    _isSelectionMode = !_isSelectionMode;
-                    _selectedItems.clear();
-                  });
-                },
+          if (_selectedIndex == 0)
+            TextButton(
+              child: Text(
+                _isSelectionMode ? 'Cancel' : 'Select',
+                style: const TextStyle(color: Color(0xFFAA8F76)),
               ),
+              onPressed: () {
+                setState(() {
+                  _isSelectionMode = !_isSelectionMode;
+                  _selectedItems.clear();
+                });
+              },
+            ),
         ],
       ),
       body: FutureBuilder<List<Expense>>(
@@ -242,10 +265,7 @@ class _ExpenseHomeState extends State<ExpenseHome> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.insights), // A more fitting icon for "Spending"
             label: 'Spending', // UPDATED: Label is now "Spending"
@@ -259,9 +279,9 @@ class _ExpenseHomeState extends State<ExpenseHome> {
       ),
       floatingActionButton: _selectedIndex == 0 && !_isSelectionMode
           ? FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () => _startAddExpense(context),
-      )
+              child: const Icon(Icons.add),
+              onPressed: () => _startAddExpense(context),
+            )
           : null,
     );
   }
