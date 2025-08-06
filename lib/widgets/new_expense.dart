@@ -1,8 +1,9 @@
+import 'package:expense_tracker/models/category.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class NewExpense extends StatefulWidget {
-  final Function(String, double, DateTime) onAddExpense;
+  final Function(String, double, DateTime, ExpenseCategory) onAddExpense;
 
   const NewExpense({super.key, required this.onAddExpense});
 
@@ -14,6 +15,7 @@ class _NewExpenseState extends State<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime? _selectedDate;
+  ExpenseCategory? _selectedCategory;
 
   // Function to show an error dialog
   void _showErrorDialog(String message) {
@@ -51,12 +53,16 @@ class _NewExpenseState extends State<NewExpense> {
       _showErrorDialog('Please select a date.');
       return;
     }
+    if(_selectedCategory == null) {
+      _showErrorDialog('Please select a category');
+    }
 
     // If all data is valid, call the callback and close the modal
     widget.onAddExpense(
       _titleController.text,
       enteredAmount,
       _selectedDate!,
+      _selectedCategory!,
     );
     Navigator.of(context).pop();
   }
@@ -122,6 +128,36 @@ class _NewExpenseState extends State<NewExpense> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textInputAction: TextInputAction.done, // Triggers submit
               onSubmitted: (_) => _submitData(),
+            ),
+            const SizedBox(height: 20),
+            Text('Category', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 50,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: availableCategories.map((category) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      label: Text(category.name),
+                      avatar: Icon(category.icon, color: _selectedCategory == category.type ? Colors.white : category.color),
+                      selected: _selectedCategory == category.type,
+                      onSelected: (isSelected) {
+                        setState(() {
+                          if (isSelected) {
+                            _selectedCategory = category.type;
+                          }
+                        });
+                      },
+                      selectedColor: category.color,
+                      labelStyle: TextStyle(
+                        color: _selectedCategory == category.type ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
             const SizedBox(height: 20),
             // A more intuitive date picker button

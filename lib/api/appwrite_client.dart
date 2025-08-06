@@ -1,5 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as models;
+import 'package:expense_tracker/models/category.dart';
 import 'package:expense_tracker/models/expense.dart';
 
 class AppwriteClient {
@@ -58,11 +59,18 @@ class AppwriteClient {
       );
 
       return response.documents.map((doc) {
+        final categoryString = doc.data['category'] as String? ?? 'other';
+        final category = ExpenseCategory.values.firstWhere(
+            (e) => e.name == categoryString,
+          orElse: () => ExpenseCategory.other,
+        );
+
         return Expense(
           id: doc.$id,
           title: doc.data['title'],
           amount: (doc.data['amount'] as num).toDouble(),
           date: DateTime.parse(doc.data['date']),
+          category: category,
         );
       }).toList();
     } on AppwriteException catch (e) {
@@ -81,6 +89,7 @@ class AppwriteClient {
         'amount': expense.amount,
         'date': expense.date.toIso8601String(),
         'userId': userId,
+        'category': expense.category.name,
       },
     );
   }

@@ -2,30 +2,31 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../screens/spending_screen.dart'; // Import to get access to FilterType
 
-// A dedicated data class for chart points. This is more robust than using a Map.
 class ChartDataPoint {
   final DateTime date;
   final double amount;
   ChartDataPoint({required this.date, required this.amount});
 }
 
-// An enum to define the chart type, passed from the parent widget.
 enum ChartType { bar, line }
 
 class Chart extends StatelessWidget {
   final List<ChartDataPoint> dataPoints;
   final ChartType chartType;
+  final FilterType filterType; // Add this to know how to format labels
 
   const Chart({
     super.key,
     required this.dataPoints,
     required this.chartType,
+    required this.filterType, // Add to constructor
   });
 
   @override
   Widget build(BuildContext context) {
-    if (dataPoints.isEmpty) {
+    if (dataPoints.isEmpty || dataPoints.every((p) => p.amount == 0)) {
       return const Center(
         child: Text(
           "No expenses in this period.",
@@ -34,7 +35,6 @@ class Chart extends StatelessWidget {
       );
     }
 
-    // Use a switch statement to build the selected chart type.
     switch (chartType) {
       case ChartType.bar:
         return _buildBarChart(context);
@@ -43,7 +43,6 @@ class Chart extends StatelessWidget {
     }
   }
 
-  /// Builds the Bar Chart with interactive tooltips.
   Widget _buildBarChart(BuildContext context) {
     final maxAmount = dataPoints.fold(0.0, (max, p) => max > p.amount ? max : p.amount);
 
@@ -53,10 +52,8 @@ class Chart extends StatelessWidget {
         gridData: FlGridData(show: false),
         borderData: FlBorderData(show: false),
         titlesData: _buildAxisTitles(),
-        // --- Interactivity Logic ---
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            // UPDATED: This is the correct way to set the tooltip color.
             getTooltipColor: (group) => Colors.blueGrey,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final point = dataPoints[group.x.toInt()];
@@ -92,13 +89,19 @@ class Chart extends StatelessWidget {
     );
   }
 
-  /// Builds the Line Chart.
   Widget _buildLineChart(BuildContext context) {
     final maxAmount = dataPoints.fold(0.0, (max, p) => max > p.amount ? max : p.amount);
 
     return LineChart(
       LineChartData(
+        minY: 0,
         maxY: maxAmount == 0 ? 10 : maxAmount * 1.2,
+        clipData: const FlClipData(
+          top: false,
+          bottom: true,
+          left: false,
+          right: false,
+        ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
@@ -127,7 +130,7 @@ class Chart extends StatelessWidget {
     );
   }
 
-  /// Helper to build the axis titles, reusable for both charts.
+  /// REFACTORED: This helper now uses the filterType to render the correct labels.
   FlTitlesData _buildAxisTitles() {
     return FlTitlesData(
       leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -139,15 +142,23 @@ class Chart extends StatelessWidget {
           reservedSize: 30,
           interval: 1,
           getTitlesWidget: (value, meta) {
-            // Show fewer labels if there's a lot of data to prevent overlap
-            final interval = (dataPoints.length / 7).ceil();
-            if (value.toInt() % interval != 0) {
-              return const SizedBox.shrink();
+            final point = dataPoints[value.toInt()];
+            String text;
+            switch (filterType) {
+              case FilterType.week:
+                text = DateFormat.E().format(point.date); // e.g., "Mon"
+                break;
+              case FilterType.month:
+              // For the month view, show the start date of the week
+                text = DateFormat('d/M').format(point.date); // e.g., "23/7"
+                break;
+              case FilterType.year:
+                text = DateFormat.MMM().format(point.date); // e.g., "Jul"
+                break;
             }
-            final date = dataPoints[value.toInt()].date;
             return SideTitleWidget(
               axisSide: meta.axisSide,
-              child: Text(DateFormat.E().format(date), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
             );
           },
         ),

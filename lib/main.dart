@@ -1,5 +1,6 @@
 import 'package:expense_tracker/api/appwrite_client.dart';
 import 'package:expense_tracker/api/auth_notifier.dart';
+import 'package:expense_tracker/models/category.dart';
 import 'package:expense_tracker/screens/auth_gate.dart';
 import 'package:expense_tracker/screens/spending_screen.dart'; // Import the new screen
 import 'package:flutter/material.dart';
@@ -100,9 +101,9 @@ class _ExpenseHomeState extends State<ExpenseHome> {
     }
   }
 
-  void _addNewExpense(String title, double amount, DateTime date) async {
+  void _addNewExpense(String title, double amount, DateTime date, ExpenseCategory category) async {
     if (_currentUser == null) return;
-    final newExp = Expense(id: '', title: title, amount: amount, date: date);
+    final newExp = Expense(id: '', title: title, amount: amount, date: date, category: category);
     await _appwriteClient.addExpense(newExp, _currentUser!.$id);
     _refreshExpenses();
   }
