@@ -94,6 +94,21 @@ class AppwriteClient {
     );
   }
 
+  Future<void> updateExpense(Expense expense) async {
+    await databases.updateDocument(
+      databaseId: databaseId,
+      collectionId: collectionId,
+      documentId: expense.id, // Use the existing expense's ID
+      data: {
+        'title': expense.title,
+        'amount': expense.amount,
+        'date': expense.date.toIso8601String(),
+        'category': expense.category.name,
+        // We don't need to update the userId as it doesn't change
+      },
+    );
+  }
+
   Future<void> deleteExpense(String documentId) async {
     await databases.deleteDocument(
       databaseId: databaseId,

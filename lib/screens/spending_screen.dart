@@ -8,8 +8,15 @@ enum FilterType { week, month, year }
 
 class SpendingScreen extends StatefulWidget {
   final List<Expense> expenses;
+  final FilterType initialFilter;
+  final Function(FilterType) onFilterChanged;
 
-  const SpendingScreen({super.key, required this.expenses});
+  const SpendingScreen({
+    super.key,
+    required this.expenses,
+    required this.initialFilter,
+    required this.onFilterChanged,
+  });
 
   @override
   State<SpendingScreen> createState() => _SpendingScreenState();
@@ -17,7 +24,24 @@ class SpendingScreen extends StatefulWidget {
 
 class _SpendingScreenState extends State<SpendingScreen> {
   ChartType _selectedChartType = ChartType.bar;
-  FilterType _selectedFilter = FilterType.week;
+  late FilterType _selectedFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedFilter = widget.initialFilter;
+  }
+
+
+  @override
+  void didUpdateWidget(covariant SpendingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialFilter != oldWidget.initialFilter) {
+      setState(() {
+        _selectedFilter = widget.initialFilter;
+      });
+    }
+  }
 
   /// REFACTORED: This getter now contains robust logic to group data
   /// correctly for each filter type.
@@ -90,9 +114,7 @@ class _SpendingScreenState extends State<SpendingScreen> {
             ],
             selected: {_selectedFilter},
             onSelectionChanged: (newSelection) {
-              setState(() {
-                _selectedFilter = newSelection.first;
-              });
+              widget.onFilterChanged(newSelection.first);
             },
           ),
           const SizedBox(height: 16),

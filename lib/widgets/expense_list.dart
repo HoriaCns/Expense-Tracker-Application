@@ -8,7 +8,7 @@ class ExpenseList extends StatelessWidget {
   final Function(Expense) onShare;
   final bool isSelectionMode;
   final Set<String> selectedItems;
-  final Function(String) onItemTapped;
+  final Function(Expense) onItemTapped;
 
   const ExpenseList({
     super.key,
@@ -37,6 +37,7 @@ class ExpenseList extends StatelessWidget {
             ),
         )
         : ListView.builder(
+      physics: BouncingScrollPhysics(),
             itemCount: expenses.length,
             itemBuilder: (ctx, i) {
               final expense = expenses[i];
@@ -46,7 +47,7 @@ class ExpenseList extends StatelessWidget {
                 onShare: onShare,
                 isSelectionMode: isSelectionMode,
                 isSelected: selectedItems.contains(expense.id),
-                onTap: () => onItemTapped(expense.id),
+                onTap: () => onItemTapped(expense),
               );
             }
         );

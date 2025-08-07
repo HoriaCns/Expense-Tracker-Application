@@ -2,7 +2,9 @@ import 'package:expense_tracker/api/appwrite_client.dart';
 import 'package:expense_tracker/api/auth_notifier.dart';
 import 'package:expense_tracker/models/category.dart';
 import 'package:expense_tracker/screens/auth_gate.dart';
-import 'package:expense_tracker/screens/spending_screen.dart'; // Import the new screen
+import 'package:expense_tracker/screens/home_screen.dart';
+import 'package:expense_tracker/screens/spending_screen.dart';
+import 'package:expense_tracker/widgets/filter_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appwrite/models.dart' as models;
@@ -58,53 +60,87 @@ class ExpenseHome extends StatefulWidget {
 
 class _ExpenseHomeState extends State<ExpenseHome> {
   final AppwriteClient _appwriteClient = AppwriteClient();
-  late Future<List<Expense>> _expensesFuture;
+  late Future<void> _loadExpensesFuture;
   models.User? _currentUser;
+
+  List<Expense> _allExpenses = []; // Holds the master list of all expenses
+  FilterCriteria _activeFilters = FilterCriteria(selectedCategories: {});
+
+  bool get _isFilterActive =>
+      _activeFilters.searchText != null ||
+      _activeFilters.selectedCategories.isNotEmpty ||
+      _activeFilters.dateRange != null;
 
   bool _isSelectionMode = false;
   final Set<String> _selectedItems = {};
-
   int _selectedIndex = 0;
+
+  FilterType _spendingScreenFilter = FilterType.week;
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      if (_isSelectionMode) {
+        _isSelectionMode = false;
+        _selectedItems.clear();
+      }
+    });
+  }
+
+  void _navigateToSpendingTab(FilterType filter) {
+    setState(() {
+      _spendingScreenFilter = filter;
+      _selectedIndex = 2; // Index 2 is the "Spending" tab
     });
   }
 
   @override
   void initState() {
     super.initState();
-    _expensesFuture = Future.value([]);
-    _loadUserDataAndExpenses();
+    _loadExpensesFuture = _loadUserDataAndExpenses();
   }
 
-  void _loadUserDataAndExpenses() {
+  Future<void> _loadUserDataAndExpenses() async {
     final user = Provider.of<AuthNotifier>(context, listen: false).currentUser;
-    if (mounted) {
-      setState(() {
-        _currentUser = user;
-        if (_currentUser != null) {
-          _expensesFuture = _appwriteClient.getExpenses(_currentUser!.$id);
-        }
-      });
-    }
-  }
-
-  void _refreshExpenses() {
-    if (_currentUser != null) {
+    if (user != null) {
+      _currentUser = user;
+      final expenses = await _appwriteClient.getExpenses(user.$id);
       if (mounted) {
         setState(() {
-          _expensesFuture = _appwriteClient.getExpenses(_currentUser!.$id);
+          _allExpenses = expenses;
         });
       }
     }
   }
 
-  void _addNewExpense(String title, double amount, DateTime date, ExpenseCategory category) async {
+  void _refreshExpenses() {
+    if (mounted) {
+      setState(() {
+        _loadExpensesFuture = _loadUserDataAndExpenses();
+      });
+    }
+  }
+
+  void _addNewExpense(
+    String title,
+    double amount,
+    DateTime date,
+    ExpenseCategory category,
+  ) async {
     if (_currentUser == null) return;
-    final newExp = Expense(id: '', title: title, amount: amount, date: date, category: category);
+    final newExp = Expense(
+      id: '',
+      title: title,
+      amount: amount,
+      date: date,
+      category: category,
+    );
     await _appwriteClient.addExpense(newExp, _currentUser!.$id);
+    _refreshExpenses();
+  }
+
+  void _updateExpense(Expense expense) async {
+    await _appwriteClient.updateExpense(expense);
     _refreshExpenses();
   }
 
@@ -125,15 +161,91 @@ class _ExpenseHomeState extends State<ExpenseHome> {
     Provider.of<AuthNotifier>(context, listen: false).signOut();
   }
 
-  void _startAddExpense(BuildContext context) {
+  void _startAddOrEditExpense(BuildContext context, {Expense? expense}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => NewExpense(onAddExpense: _addNewExpense),
+      builder: (_) => NewExpense(
+        onAddExpense: _addNewExpense,
+        onUpdateExpense: _updateExpense,
+        expenseToEdit: expense, // Pass the expense if we are editing
+      ),
     );
+  }
+
+  void _openFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => FilterDialog(
+        initialFilters: _activeFilters,
+        onApplyFilters: (newFilters) {
+          final potentialResult = _getFilteredExpenses(
+            _allExpenses,
+            newFilters,
+          );
+          // UPDATED: Check if any filters were actually applied before checking the result
+          final hasActiveFilters =
+              newFilters.searchText != null ||
+              newFilters.selectedCategories.isNotEmpty ||
+              newFilters.dateRange != null;
+
+          if (potentialResult.isEmpty && hasActiveFilters) {
+            // If the result is empty, show the SnackBar and do NOT apply the new filters.
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No expenses found for the selected filters.'),
+                duration: Duration(seconds: 5),
+              ),
+            );
+            return; // Exit the function here.
+          }
+
+          // If there are results, apply the new filters and rebuild the UI.
+          setState(() {
+            _activeFilters = newFilters;
+          });
+        },
+      ),
+    );
+  }
+
+  List<Expense> _getFilteredExpenses(
+    List<Expense> allExpenses,
+    FilterCriteria filters,
+  ) {
+    if (filters.searchText == null &&
+        filters.selectedCategories.isEmpty &&
+        filters.dateRange == null) {
+      return allExpenses;
+    }
+    return allExpenses.where((expense) {
+      if (filters.searchText != null &&
+          !expense.title.toLowerCase().contains(
+            filters.searchText!.toLowerCase(),
+          )) {
+        return false;
+      }
+      if (filters.selectedCategories.isNotEmpty &&
+          !filters.selectedCategories.contains(expense.category)) {
+        return false;
+      }
+      if (filters.dateRange != null) {
+        final expenseDate = DateTime(
+          expense.date.year,
+          expense.date.month,
+          expense.date.day,
+        );
+        if (expenseDate.isBefore(filters.dateRange!.start) ||
+            expenseDate.isAfter(filters.dateRange!.end)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
   }
 
   void _shareExpense(Expense expense) {
@@ -163,6 +275,7 @@ class _ExpenseHomeState extends State<ExpenseHome> {
   @override
   Widget build(BuildContext context) {
     final hasSelectedItems = _selectedItems.isNotEmpty;
+    final filteredExpenses = _getFilteredExpenses(_allExpenses, _activeFilters);
 
     return Scaffold(
       drawer: Drawer(
@@ -210,31 +323,69 @@ class _ExpenseHomeState extends State<ExpenseHome> {
                   const Text("Finora"),
                 ],
               ),
-        actions: [
-          if (hasSelectedItems)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _deleteExpenses,
-              tooltip: 'Delete Selected',
-            ),
-
-          if (_selectedIndex == 0)
-            TextButton(
-              child: Text(
-                _isSelectionMode ? 'Cancel' : 'Select',
-                style: const TextStyle(color: Color(0xFFAA8F76)),
-              ),
-              onPressed: () {
-                setState(() {
-                  _isSelectionMode = !_isSelectionMode;
-                  _selectedItems.clear();
-                });
-              },
-            ),
-        ],
+        actions:
+            _selectedIndex ==
+                1 // Only show actions on the "Expenses" tab
+            ? [
+                if (!_isSelectionMode)
+                  IconButton(
+                    icon: Icon(
+                      Icons.filter_list,
+                      color: _isFilterActive ? Colors.yellow : Colors.white,
+                    ),
+                    onPressed: _openFilterDialog,
+                    tooltip: 'Filter Expenses',
+                  ),
+                if (hasSelectedItems)
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: _deleteExpenses,
+                    tooltip: 'Delete Selected',
+                  ),
+                if (!_isSelectionMode)
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      setState(() {
+                        if (value == 'select') {
+                          _isSelectionMode = true;
+                        } else if (value == 'clear_filter') {
+                          _activeFilters = FilterCriteria(
+                            selectedCategories: {},
+                          );
+                        }
+                      });
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'select',
+                            child: Text('Select Items'),
+                          ),
+                          if (_isFilterActive)
+                            const PopupMenuItem<String>(
+                              value: 'clear_filter',
+                              child: Text('Clear Filter'),
+                            ),
+                        ],
+                  ),
+                if (_isSelectionMode)
+                  TextButton(
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isSelectionMode = false;
+                        _selectedItems.clear();
+                      });
+                    },
+                  ),
+              ]
+            : null,
       ),
-      body: FutureBuilder<List<Expense>>(
-        future: _expensesFuture,
+      body: FutureBuilder<void>(
+        future: _loadExpensesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -242,46 +393,71 @@ class _ExpenseHomeState extends State<ExpenseHome> {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          final expenses = snapshot.data ?? [];
 
           final List<Widget> pages = [
-            // Page 0: Home (Expense List)
+            HomeScreen(
+              allExpenses: _allExpenses,
+              onEditExpense: (expense) => _startAddOrEditExpense(context, expense: expense),
+              onNavigateToSpending: _navigateToSpendingTab
+            ),
+            // Page 0: New Home Screen
             ExpenseList(
-              expenses: expenses,
+              // Page 1: The original list of expenses
+              expenses: filteredExpenses,
               isSelectionMode: _isSelectionMode,
               selectedItems: _selectedItems,
-              onItemTapped: _onItemTappedForSelection,
-              onShare: _shareExpense,
+              onItemTapped: (expense) {
+                if (_isSelectionMode) {
+                  _onItemTappedForSelection(expense.id);
+                } else {
+                  _startAddOrEditExpense(context, expense: expense);
+                }
+              },
+              onShare: (expense) {},
               onDelete: (id) async {
                 await _appwriteClient.deleteExpense(id);
                 _refreshExpenses();
               },
             ),
-            // Page 1: The new SpendingScreen
-            SpendingScreen(expenses: expenses),
+            SpendingScreen(
+              expenses: _allExpenses,
+              initialFilter: _spendingScreenFilter,
+              onFilterChanged: (newFilter) {
+                setState(() {
+                  _spendingScreenFilter = newFilter;
+                });
+              },
+            ),
+            // Page 2: The spending dashboard
           ];
 
           return pages[_selectedIndex];
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
+        // UPDATED: The list of items now has 3 entries
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.insights), // A more fitting icon for "Spending"
-            label: 'Spending', // UPDATED: Label is now "Spending"
+            icon: Icon(Icons.list_alt),
+            label: 'Expenses',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights),
+            label: 'Spending',
           ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).colorScheme.secondary,
-        unselectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey,
         backgroundColor: const Color(0xFF1E1E1E),
         onTap: _onItemTapped,
       ),
-      floatingActionButton: _selectedIndex == 0 && !_isSelectionMode
+      // UPDATED: The FAB is now only visible on the "Expenses" tab (index 1)
+      floatingActionButton: _selectedIndex == 1 && !_isSelectionMode
           ? FloatingActionButton(
               child: const Icon(Icons.add),
-              onPressed: () => _startAddExpense(context),
+              onPressed: () => _startAddOrEditExpense(context),
             )
           : null,
     );

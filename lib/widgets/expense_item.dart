@@ -62,7 +62,7 @@ class ExpenseItem extends StatelessWidget {
           color: cardColor,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           // --- RESTORED: Static colored shadow ---
-          elevation: 8,
+          elevation: 10,
           shadowColor: category.color,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

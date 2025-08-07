@@ -2,10 +2,19 @@ import 'package:expense_tracker/models/category.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../models/expense.dart';
+
 class NewExpense extends StatefulWidget {
   final Function(String, double, DateTime, ExpenseCategory) onAddExpense;
+  final Function(Expense) onUpdateExpense;
+  final Expense? expenseToEdit;
 
-  const NewExpense({super.key, required this.onAddExpense});
+  const NewExpense({
+    super.key,
+    required this.onAddExpense,
+    required this.onUpdateExpense,
+    this.expenseToEdit,
+  });
 
   @override
   State<NewExpense> createState() => _NewExpenseState();
@@ -17,7 +26,21 @@ class _NewExpenseState extends State<NewExpense> {
   DateTime? _selectedDate;
   ExpenseCategory? _selectedCategory;
 
-  // Function to show an error dialog
+  bool get _isEditing => widget.expenseToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    // If we are editing, pre-fill the form fields.
+    if (_isEditing) {
+      final expense = widget.expenseToEdit!;
+      _titleController.text = expense.title;
+      _amountController.text = expense.amount.toString();
+      _selectedDate = expense.date;
+      _selectedCategory = expense.category;
+    }
+  }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -41,29 +64,30 @@ class _NewExpenseState extends State<NewExpense> {
     final isAmountInvalid = enteredAmount == null || enteredAmount <= 0;
     final isTitleInvalid = _titleController.text.trim().isEmpty;
 
-    if (isTitleInvalid) {
-      _showErrorDialog('Please enter a valid title.');
+    if (isTitleInvalid || isAmountInvalid || _selectedDate == null || _selectedCategory == null) {
+      _showErrorDialog('Please fill in all fields correctly.');
       return;
-    }
-    if (isAmountInvalid) {
-      _showErrorDialog('Please enter a valid, positive amount.');
-      return;
-    }
-    if (_selectedDate == null) {
-      _showErrorDialog('Please select a date.');
-      return;
-    }
-    if(_selectedCategory == null) {
-      _showErrorDialog('Please select a category');
     }
 
-    // If all data is valid, call the callback and close the modal
-    widget.onAddExpense(
-      _titleController.text,
-      enteredAmount,
-      _selectedDate!,
-      _selectedCategory!,
-    );
+    if (_isEditing) {
+      // If editing, create an updated expense object and call the update callback.
+      final updatedExpense = Expense(
+        id: widget.expenseToEdit!.id, // Use the original ID
+        title: _titleController.text,
+        amount: enteredAmount,
+        date: _selectedDate!,
+        category: _selectedCategory!,
+      );
+      widget.onUpdateExpense(updatedExpense);
+    } else {
+      // If creating, call the add callback as before.
+      widget.onAddExpense(
+        _titleController.text,
+        enteredAmount,
+        _selectedDate!,
+        _selectedCategory!,
+      );
+    }
     Navigator.of(context).pop();
   }
 
