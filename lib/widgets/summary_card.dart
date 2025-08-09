@@ -19,9 +19,9 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
+      elevation: 6,
       shadowColor: color,
-      color: const Color(0xFF152046),
+      color: const Color(0xFF000000),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
@@ -47,7 +47,7 @@ class SummaryCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFAA8F76),
+                  color: Color(0xFF03ED9B),
                 ),
               ),
             ],

@@ -29,7 +29,7 @@ class ExpenseItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = isSelected ? Colors.orange : Color(0xFF152046);
+    final cardColor = isSelected ? Colors.orange : Color(0xFF000000);
     final category = _categoryMap[expense.category] ?? _categoryMap[ExpenseCategory.other]!;
     final domainGuess = expense.title.split(' ').first.toLowerCase();
 
@@ -60,7 +60,7 @@ class ExpenseItem extends StatelessWidget {
         onTap: onTap,
         child: Card(
           color: cardColor,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           // --- RESTORED: Static colored shadow ---
           elevation: 10,
           shadowColor: category.color,
@@ -119,7 +119,7 @@ class ExpenseItem extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFAA8F76),
+                    color: const Color(0xFF03ED9B),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(

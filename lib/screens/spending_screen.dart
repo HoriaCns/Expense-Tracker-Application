@@ -130,7 +130,7 @@ class _SpendingScreenState extends State<SpendingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Chart Type:", style: TextStyle(color: Colors.white)),
+              const Text("Chart Type:", style: TextStyle(color: Colors.black)),
               const SizedBox(width: 8),
               ToggleButtons(
                 isSelected: [_selectedChartType == ChartType.bar, _selectedChartType == ChartType.line],

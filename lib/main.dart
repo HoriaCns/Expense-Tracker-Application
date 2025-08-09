@@ -30,18 +30,18 @@ class ExpenseApp extends StatelessWidget {
       title: 'Finora',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF96A4D3),
+        scaffoldBackgroundColor: const Color(0xFFDEE8DD),
         primaryColor: const Color(0x00000000),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF96A4D3),
-          secondary: const Color(0xFFAA8F76),
+          seedColor: const Color(0xFFFBFBFB),
+          secondary: const Color(0xFF03ED9B),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF152046),
-          foregroundColor: Color(0xFFAA8F76),
+          backgroundColor: Color(0xFF000000),
+          foregroundColor: Color(0xFFFBFBFB),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: Color(0xFFFBFBFB),
         ),
         cardColor: const Color(0xFFFFFFFF),
         textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.white)),
@@ -283,7 +283,7 @@ class _ExpenseHomeState extends State<ExpenseHome> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(color: Color(0xFF152046)),
+              decoration: const BoxDecoration(color: Color(0x6C000000)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,

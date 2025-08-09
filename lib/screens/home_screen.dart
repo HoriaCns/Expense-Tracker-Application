@@ -72,9 +72,9 @@ class HomeScreen extends StatelessWidget {
         // --- Recent Transactions ---
         const Text(
           'Recent Transactions',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
         ),
-        const Divider(color: Colors.white, height: 24, thickness: 5.0),
+        const Divider(color: Colors.black, height: 24, thickness: 5.0),
         if (recentExpenses.isEmpty)
           const Center(
             child: Padding(

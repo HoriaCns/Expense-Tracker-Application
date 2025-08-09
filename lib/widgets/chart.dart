@@ -49,7 +49,12 @@ class Chart extends StatelessWidget {
     return BarChart(
       BarChartData(
         maxY: maxAmount == 0 ? 10 : maxAmount * 1.2,
-        gridData: FlGridData(show: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: true,
+          getDrawingHorizontalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 2),
+          getDrawingVerticalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 2),
+        ),
         borderData: FlBorderData(show: false),
         titlesData: _buildAxisTitles(),
         barTouchData: BarTouchData(
@@ -105,11 +110,11 @@ class Chart extends StatelessWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
-          getDrawingHorizontalLine: (value) => const FlLine(color: Colors.white10, strokeWidth: 1),
-          getDrawingVerticalLine: (value) => const FlLine(color: Colors.white10, strokeWidth: 1),
+          getDrawingHorizontalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 1),
+          getDrawingVerticalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 1),
         ),
         titlesData: _buildAxisTitles(),
-        borderData: FlBorderData(show: true, border: Border.all(color: Colors.white10)),
+        borderData: FlBorderData(show: true, border: Border.all(color: Colors.black26)),
         lineBarsData: [
           LineChartBarData(
             spots: dataPoints.asMap().entries.map((entry) {
@@ -158,7 +163,7 @@ class Chart extends StatelessWidget {
             }
             return SideTitleWidget(
               axisSide: meta.axisSide,
-              child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              child: Text(text, style: const TextStyle(color: Colors.black, fontSize: 12)),
             );
           },
         ),

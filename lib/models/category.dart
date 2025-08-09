@@ -57,7 +57,7 @@ const List<Category> availableCategories = [
     type: ExpenseCategory.shopping,
     name: 'Shopping',
     icon: Icons.shopping_bag,
-    color: Colors.green,
+    color: Colors.yellow,
   ),
   Category(
     type: ExpenseCategory.health,
@@ -69,6 +69,6 @@ const List<Category> availableCategories = [
     type: ExpenseCategory.other,
     name: 'Other',
     icon: Icons.more_horiz,
-    color: Colors.brown,
+    color: Colors.blueGrey,
   ),
 ];
