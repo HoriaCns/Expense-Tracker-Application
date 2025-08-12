@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../screens/spending_screen.dart'; // Import to get access to FilterType
+import '../screens/spending_screen.dart';
 
 class ChartDataPoint {
   final DateTime date;
@@ -15,13 +15,13 @@ enum ChartType { bar, line }
 class Chart extends StatelessWidget {
   final List<ChartDataPoint> dataPoints;
   final ChartType chartType;
-  final FilterType filterType; // Add this to know how to format labels
+  final FilterType filterType;
 
   const Chart({
     super.key,
     required this.dataPoints,
     required this.chartType,
-    required this.filterType, // Add to constructor
+    required this.filterType,
   });
 
   @override
@@ -30,33 +30,37 @@ class Chart extends StatelessWidget {
       return const Center(
         child: Text(
           "No expenses in this period.",
-          style: TextStyle(color: Colors.white54, fontSize: 16),
+          style: TextStyle(color: Colors.black54, fontSize: 16),
         ),
       );
     }
 
+    // --- MODIFIED: We calculate maxAmount here to pass it to the builders ---
+    final maxAmount = dataPoints.fold(0.0, (max, p) => max > p.amount ? max : p.amount);
+    // Ensure we have a sensible top value, even if maxAmount is small
+    final chartTopY = maxAmount == 0 ? 50.0 : (maxAmount * 1.2);
+
+
     switch (chartType) {
       case ChartType.bar:
-        return _buildBarChart(context);
+        return _buildBarChart(context, chartTopY);
       case ChartType.line:
-        return _buildLineChart(context);
+        return _buildLineChart(context, chartTopY);
     }
   }
 
-  Widget _buildBarChart(BuildContext context) {
-    final maxAmount = dataPoints.fold(0.0, (max, p) => max > p.amount ? max : p.amount);
-
+  Widget _buildBarChart(BuildContext context, double maxY) {
     return BarChart(
       BarChartData(
-        maxY: maxAmount == 0 ? 10 : maxAmount * 1.2,
+        maxY: maxY,
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
-          getDrawingHorizontalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 2),
-          getDrawingVerticalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 2),
+          getDrawingHorizontalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 1),
+          getDrawingVerticalLine: (value) => const FlLine(color: Colors.transparent), // Hide vertical grid lines
         ),
         borderData: FlBorderData(show: false),
-        titlesData: _buildAxisTitles(),
+        titlesData: _buildAxisTitles(maxY), // MODIFIED: Pass maxY
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             getTooltipColor: (group) => Colors.blueGrey,
@@ -94,27 +98,25 @@ class Chart extends StatelessWidget {
     );
   }
 
-  Widget _buildLineChart(BuildContext context) {
-    final maxAmount = dataPoints.fold(0.0, (max, p) => max > p.amount ? max : p.amount);
-
+  Widget _buildLineChart(BuildContext context, double maxY) {
     return LineChart(
       LineChartData(
         minY: 0,
-        maxY: maxAmount == 0 ? 10 : maxAmount * 1.2,
+        maxY: maxY,
         clipData: const FlClipData(
           top: false,
           bottom: true,
-          left: false,
-          right: false,
+          left: true, // Clip to the chart area
+          right: true,
         ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
           getDrawingHorizontalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 1),
-          getDrawingVerticalLine: (value) => const FlLine(color: Colors.black26, strokeWidth: 1),
+          getDrawingVerticalLine: (value) => const FlLine(color: Colors.transparent),
         ),
-        titlesData: _buildAxisTitles(),
-        borderData: FlBorderData(show: true, border: Border.all(color: Colors.black26)),
+        titlesData: _buildAxisTitles(maxY), // MODIFIED: Pass maxY
+        borderData: FlBorderData(show: true, border: Border.all(color: Colors.black12)),
         lineBarsData: [
           LineChartBarData(
             spots: dataPoints.asMap().entries.map((entry) {
@@ -135,10 +137,35 @@ class Chart extends StatelessWidget {
     );
   }
 
-  /// REFACTORED: This helper now uses the filterType to render the correct labels.
-  FlTitlesData _buildAxisTitles() {
+  /// REFACTORED: This helper now builds the Y-axis (left) titles dynamically.
+  FlTitlesData _buildAxisTitles(double maxY) {
     return FlTitlesData(
-      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      // --- ADDED: Left (Y-Axis) Titles Configuration ---
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 45, // Make space for the labels
+          // This function determines what text to show for each interval
+          getTitlesWidget: (value, meta) {
+            // We don't want to show a label for the very top of the chart
+            if (value == meta.max) {
+              return Container();
+            }
+            return Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Text(
+                '£${value.toInt()}',
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+                textAlign: TextAlign.right,
+              ),
+            );
+          },
+          // This dynamically calculates the interval between labels.
+          // We aim for about 4-5 labels on the axis.
+          interval: maxY / 4,
+        ),
+      ),
+      // --- END OF ADDED SECTION ---
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       bottomTitles: AxisTitles(
@@ -147,6 +174,7 @@ class Chart extends StatelessWidget {
           reservedSize: 30,
           interval: 1,
           getTitlesWidget: (value, meta) {
+            if(value.toInt() >= dataPoints.length) return Container(); // Avoid range errors
             final point = dataPoints[value.toInt()];
             String text;
             switch (filterType) {
@@ -154,7 +182,6 @@ class Chart extends StatelessWidget {
                 text = DateFormat.E().format(point.date); // e.g., "Mon"
                 break;
               case FilterType.month:
-              // For the month view, show the start date of the week
                 text = DateFormat('d/M').format(point.date); // e.g., "23/7"
                 break;
               case FilterType.year:
@@ -163,6 +190,7 @@ class Chart extends StatelessWidget {
             }
             return SideTitleWidget(
               axisSide: meta.axisSide,
+              space: 4,
               child: Text(text, style: const TextStyle(color: Colors.black, fontSize: 12)),
             );
           },

@@ -1,6 +1,9 @@
+import 'package:expense_tracker/providers/budget_provider.dart';
+import 'package:expense_tracker/screens/budget_screen.dart';
 import 'package:expense_tracker/screens/spending_screen.dart';
+import 'package:expense_tracker/widgets/budget_summary_card.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../models/expense.dart';
 import '../widgets/expense_item.dart';
@@ -18,7 +21,6 @@ class HomeScreen extends StatelessWidget {
     required this.onNavigateToSpending,
   });
 
-  // Helper to calculate total for a given period
   double _calculateTotal(List<Expense> expenses, DateTime start, DateTime end) {
     return expenses
         .where((exp) => exp.date.isAfter(start) && exp.date.isBefore(end))
@@ -36,14 +38,41 @@ class HomeScreen extends StatelessWidget {
     final totalWeek = _calculateTotal(allExpenses, weekStart, now.add(const Duration(days: 1)));
     final totalMonth = _calculateTotal(allExpenses, monthStart, now.add(const Duration(days: 1)));
 
-    // Sort expenses by date to get the most recent ones
     final recentExpenses = List<Expense>.from(allExpenses)
       ..sort((a, b) => b.date.compareTo(a.date));
 
+    // Watch the BudgetProvider
+    final budgetProvider = context.watch<BudgetProvider?>();
+
     return ListView(
-      padding: const EdgeInsets.all(36.0),
-      physics: BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      physics: const BouncingScrollPhysics(),
       children: [
+        // --- ADDED: Budget Summary Card ---
+        if (budgetProvider != null && budgetProvider.currentMonthBudget != null)
+          BudgetSummaryCard(
+            budgetAmount: budgetProvider.currentMonthBudget!.amount,
+            totalSpent: totalMonth,
+            onEdit: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
+            },
+          )
+        else
+        // Show a prompt to set a budget if one doesn't exist
+          Card(
+            elevation: 4,
+            child: ListTile(
+              leading: const Icon(Icons.add_chart, color: Colors.deepPurple),
+              title: const Text('Set a Monthly Budget', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              subtitle: const Text('Track your spending against a goal.', style: TextStyle(color: Colors.black54)),
+              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
+              },
+            ),
+          ),
+        const SizedBox(height: 16),
+
         // --- Summary Cards ---
         SummaryCard(
           title: 'Spent Today',
@@ -74,27 +103,26 @@ class HomeScreen extends StatelessWidget {
           'Recent Transactions',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
         ),
-        const Divider(color: Colors.black, height: 24, thickness: 5.0),
+        const Divider(color: Colors.black26, height: 24, thickness: 1.0),
         if (recentExpenses.isEmpty)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(32.0),
               child: Text(
                 'No recent transactions to show.',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+                style: TextStyle(color: Colors.black54, fontSize: 16),
               ),
             ),
           )
         else
-        // Take the first 5 recent expenses, or fewer if the list is short
           ...recentExpenses.take(5).map((expense) {
             return ExpenseItem(
               expense: expense,
-              onDelete: (id) {}, // Delete is handled on the Expenses screen
-              onShare: (exp) {}, // Share is handled on the Expenses screen
+              onDelete: (id) {},
+              onShare: (exp) {},
               isSelectionMode: false,
               isSelected: false,
-              onTap: () => onEditExpense(expense), // Allow editing from the dashboard
+              onTap: () => onEditExpense(expense),
             );
           }),
       ],
