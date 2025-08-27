@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 import 'package:expense_tracker/api/appwrite_client.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/models/category.dart';
@@ -7,7 +8,7 @@ import 'package:expense_tracker/widgets/chart.dart'; // For ChartDataPoint
 import 'package:expense_tracker/widgets/filter_dialog.dart'; // For FilterCriteria
 
 class ExpenseProvider extends ChangeNotifier {
-  final AppwriteClient _appwriteClient = AppwriteClient();
+  AppwriteClient? _appwriteClient;
   final String _userId;
 
   // --- Private State ---
@@ -18,6 +19,12 @@ class ExpenseProvider extends ChangeNotifier {
 
   // --- Public Getters ---
   List<Expense> get allExpenses => _allExpenses;
+
+  @visibleForTesting
+  set allExpenses(List<Expense> expenses) {
+    _allExpenses = expenses;
+  }
+
   bool get isLoading => _isLoading;
   String? get error => _error;
   FilterCriteria get activeFilters => _activeFilters;
@@ -49,7 +56,10 @@ class ExpenseProvider extends ChangeNotifier {
     }).toList();
   }
 
-  ExpenseProvider(this._userId) {
+  ExpenseProvider(this._userId, {AppwriteClient? appwriteClient}) {
+    // If an appwriteClient is provided (like in a test), use it.
+    // Otherwise, create a new real instance for the app.
+    _appwriteClient = appwriteClient ?? AppwriteClient();
     fetchExpenses();
   }
 
@@ -61,7 +71,8 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _allExpenses = await _appwriteClient.getExpenses(_userId);
+      // Use '!' since we know it's initialized in the constructor
+      _allExpenses = await _appwriteClient!.getExpenses(_userId);
     } catch (e) {
       _error = "Failed to load expenses. Please check your connection.";
     } finally {
@@ -72,17 +83,17 @@ class ExpenseProvider extends ChangeNotifier {
 
   Future<void> addExpense(String title, double amount, DateTime date, ExpenseCategory category) async {
     final newExp = Expense(id: '', title: title, amount: amount, date: date, category: category);
-    await _appwriteClient.addExpense(newExp, _userId);
+    await _appwriteClient!.addExpense(newExp, _userId);
     await fetchExpenses();
   }
 
   Future<void> updateExpense(Expense expense) async {
-    await _appwriteClient.updateExpense(expense);
+    await _appwriteClient!.updateExpense(expense);
     await fetchExpenses();
   }
 
   Future<void> deleteExpense(String documentId) async {
-    await _appwriteClient.deleteExpense(documentId);
+    await _appwriteClient!.deleteExpense(documentId);
     _allExpenses.removeWhere((exp) => exp.id == documentId);
     notifyListeners();
   }
