@@ -7,7 +7,7 @@ import 'package:expense_tracker/widgets/chart.dart'; // For ChartDataPoint
 import 'package:expense_tracker/widgets/filter_dialog.dart'; // For FilterCriteria
 
 class ExpenseProvider extends ChangeNotifier {
-  final AppwriteClient _appwriteClient = AppwriteClient();
+  late final AppwriteClient _appwriteClient;
   final String _userId;
 
   // --- Private State ---
@@ -49,7 +49,8 @@ class ExpenseProvider extends ChangeNotifier {
     }).toList();
   }
 
-  ExpenseProvider(this._userId) {
+  ExpenseProvider(this._userId, {AppwriteClient? appwriteClient}) {
+    _appwriteClient = appwriteClient ?? AppwriteClient();
     fetchExpenses();
   }
 

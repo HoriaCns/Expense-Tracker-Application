@@ -25,10 +25,17 @@ void main() {
     // Enter the expense details.
     await tester.enterText(find.widgetWithText(TextField, 'Title'), 'Test Expense');
     await tester.enterText(find.widgetWithText(TextField, 'Amount'), '12.34');
-    await tester.tap(find.text('Select Date'));
+
+    // MODIFICATION START
+    // Tap the button to open the date picker
+    await tester.tap(find.byIcon(Icons.edit_calendar_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('OK'));
+
+    // Find the confirmation button and tap it. This is more reliable than finding by text "OK".
+    await tester.tap(find.byWidgetPredicate((widget) => widget is TextButton && widget.child is Text && (widget.child as Text).data == 'OK'));
     await tester.pumpAndSettle();
+    // MODIFICATION END
+
     await tester.tap(find.text('Food'));
     await tester.pumpAndSettle();
 
@@ -38,6 +45,7 @@ void main() {
 
     // Verify that the new expense is displayed in the list.
     expect(find.text('Test Expense'), findsOneWidget);
+    // Note: The amount is formatted, so we need to find it by its formatted string.
     expect(find.text('£12.34'), findsOneWidget);
   });
 }
