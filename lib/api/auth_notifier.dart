@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:appwrite/models.dart' as models;
 import 'package:expense_tracker/api/appwrite_client.dart';
+import 'dart:developer' as developer;
 
 // Enum to represent the different states of authentication.
 enum AuthStatus {
@@ -21,16 +22,20 @@ class AuthNotifier extends ChangeNotifier {
 
   // Constructor runs when the notifier is created.
   AuthNotifier() {
+    developer.log('AuthNotifier constructor called');
     checkCurrentUser();
   }
 
   /// Checks for an existing user session on app start.
   Future<void> checkCurrentUser() async {
+    developer.log('checkCurrentUser() started');
     try {
       _currentUser = await _appwriteClient.getCurrentUser();
       _status = AuthStatus.authenticated;
+      developer.log('User is authenticated: ${_currentUser!.$id}');
     } catch (e) {
       _status = AuthStatus.unauthenticated;
+      developer.log('User is unauthenticated: $e');
     }
     // Notify all listeners that the state has changed.
     notifyListeners();

@@ -22,8 +22,7 @@ class AppwriteClient {
   AppwriteClient() {
     client
         .setEndpoint(endpoint)
-        .setProject(projectId)
-        .setSelfSigned(status: true);
+        .setProject(projectId);
 
     account = Account(client);
     databases = Databases(client);
@@ -177,11 +176,15 @@ class AppwriteClient {
   }
 
   Future<void> updateBudget(String documentId, double amount) async {
+    final monthString = DateFormat('yyyy-MM').format(DateTime.now());
     await databases.updateDocument(
       databaseId: databaseId,
       collectionId: budgetCollectionId,
       documentId: documentId,
-      data: {'amount': amount},
+      data: {
+        'amount': amount,
+        'month': monthString,
+      },
     );
   }
 }

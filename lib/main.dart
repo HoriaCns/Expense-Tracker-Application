@@ -9,13 +9,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'dart:developer' as developer;
 
 import 'models/expense.dart';
 import 'widgets/expense_list.dart';
 import 'widgets/new_expense.dart';
 
 Future<void> main() async {
-  await dotenv.load(fileName: ".env");
+  developer.log('main() started');
+  WidgetsFlutterBinding.ensureInitialized();
+  developer.log('Flutter binding initialized');
+  try {
+    await dotenv.load(fileName: ".env");
+    developer.log('.env file loaded successfully');
+  } catch (e) {
+    developer.log('Error loading .env file: $e');
+  }
 
   runApp(
     MultiProvider(
@@ -24,19 +33,34 @@ Future<void> main() async {
         ChangeNotifierProxyProvider<AuthNotifier, ExpenseProvider?>(
           create: (_) => null,
           update: (context, auth, previous) {
+            developer.log('ExpenseProvider updating...');
             final user = auth.currentUser;
-            if (user == null) return null;
-            if (previous?.allExpenses.isNotEmpty ?? false) return previous;
+            if (user == null) {
+              developer.log('User is null, returning null for ExpenseProvider');
+              return null;
+            }
+            if (previous?.allExpenses.isNotEmpty ?? false) {
+              developer.log('Returning previous ExpenseProvider');
+              return previous;
+            }
+            developer.log('Creating new ExpenseProvider for user ${user.$id}');
             return ExpenseProvider(user.$id);
           },
         ),
-        // --- ADDED: BudgetProvider ---
         ChangeNotifierProxyProvider<AuthNotifier, BudgetProvider?>(
           create: (_) => null,
           update: (context, auth, previous) {
+            developer.log('BudgetProvider updating...');
             final user = auth.currentUser;
-            if (user == null) return null;
-            if (previous != null) return previous;
+            if (user == null) {
+              developer.log('User is null, returning null for BudgetProvider');
+              return null;
+            }
+            if (previous != null) {
+              developer.log('Returning previous BudgetProvider');
+              return previous;
+            }
+            developer.log('Creating new BudgetProvider for user ${user.$id}');
             return BudgetProvider(user.$id);
           },
         ),
@@ -44,6 +68,7 @@ Future<void> main() async {
       child: ExpenseApp(),
     ),
   );
+  developer.log('runApp() called');
 }
 
 class ExpenseApp extends StatelessWidget {
