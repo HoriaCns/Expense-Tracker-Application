@@ -48,29 +48,33 @@ class HomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       physics: const BouncingScrollPhysics(),
       children: [
-        // --- ADDED: Budget Summary Card ---
-        if (budgetProvider != null && budgetProvider.currentMonthBudget != null)
-          BudgetSummaryCard(
-            budgetAmount: budgetProvider.currentMonthBudget!.amount,
-            totalSpent: totalMonth,
-            onEdit: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
-            },
-          )
-        else
-        // Show a prompt to set a budget if one doesn't exist
-          Card(
-            elevation: 4,
-            child: ListTile(
-              leading: const Icon(Icons.add_chart, color: Colors.deepPurple),
-              title: const Text('Set a Monthly Budget', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Track your spending against a goal.', style: TextStyle(color: Colors.black54)),
-              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
-              },
-            ),
-          ),
+        Consumer<BudgetProvider?>(
+          builder: (context, budgetProvider, child) {
+            if (budgetProvider != null && budgetProvider.currentMonthBudget != null) {
+              return BudgetSummaryCard(
+                budgetAmount: budgetProvider.currentMonthBudget!.amount,
+                totalSpent: totalMonth,
+                onEdit: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
+                },
+              );
+            } else {
+              // Show a prompt to set a budget if one doesn't exist
+              return Card(
+                elevation: 4,
+                child: ListTile(
+                  leading: const Icon(Icons.add_chart, color: Colors.deepPurple),
+                  title: const Text('Set a Monthly Budget', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Track your spending against a goal.', style: TextStyle(color: Colors.black54)),
+                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
+                  },
+                ),
+              );
+            }
+          },
+        ),
         const SizedBox(height: 16),
 
         // --- Summary Cards ---
