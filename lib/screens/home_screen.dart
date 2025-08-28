@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
 
   double _calculateTotal(List<Expense> expenses, DateTime start, DateTime end) {
     return expenses
-        .where((exp) => exp.date.isAfter(start) && exp.date.isBefore(end))
+        .where((exp) => !exp.date.isBefore(start) && exp.date.isBefore(end))
         .fold(0.0, (sum, item) => sum + item.amount);
   }
 
@@ -31,12 +31,13 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
     final weekStart = todayStart.subtract(Duration(days: now.weekday - 1));
     final monthStart = DateTime(now.year, now.month, 1);
 
-    final totalToday = _calculateTotal(allExpenses, todayStart, now.add(const Duration(days: 1)));
-    final totalWeek = _calculateTotal(allExpenses, weekStart, now.add(const Duration(days: 1)));
-    final totalMonth = _calculateTotal(allExpenses, monthStart, now.add(const Duration(days: 1)));
+    final totalToday = _calculateTotal(allExpenses, todayStart, tomorrowStart);
+    final totalWeek = _calculateTotal(allExpenses, weekStart, tomorrowStart);
+    final totalMonth = _calculateTotal(allExpenses, monthStart, tomorrowStart);
 
     final recentExpenses = List<Expense>.from(allExpenses)
       ..sort((a, b) => b.date.compareTo(a.date));
