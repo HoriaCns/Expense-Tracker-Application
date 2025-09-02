@@ -9,7 +9,7 @@ Follow these steps to install Finora on your Android phone.
 
 Step 1: Transfer the File to Your Phone
 
-First, get the app-release.apk file onto your device. You can download it from: https://webapp.diawi.com/install/nCV94z
+First, get the app-release.apk file onto your device. You can download it from: https://drive.google.com/file/d/1VY-g-CJ1RiGrIH0Uyp9wure-WYsuB9iP/view?usp=drive_link
 
 Download the file to your phone's "Downloads" folder.
 
